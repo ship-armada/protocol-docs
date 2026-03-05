@@ -1,7 +1,7 @@
 # Armada Crowdfunding Spec
 ⚠️ **in flux** ⚠️
 
-This is a first draft, open for commentary ([Discord](https://discord.gg/PHJDgHMA)). Its complexity will need to be balanced with the need for simplicity.
+This is a first draft, open for commentary ([Discord](https://discord.gg/KGN3QQRYAt)). Its complexity will need to be balanced with the need for simplicity.
 
 ## Overview
 
