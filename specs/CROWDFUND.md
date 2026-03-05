@@ -1,7 +1,7 @@
 # Armada Crowdfunding Spec
 ⚠️ **in flux** ⚠️
 
-This is a first draft, open for commentary ([Discord](https://discord.gg/KGN3QQRYAt)). Its complexity will need to be balanced with the need for simplicity.
+This is a draft, open for commentary ([Discord](https://discord.gg/KGN3QQRYAt)).
 
 ## Overview
 
@@ -15,6 +15,7 @@ Armada will raise funds by "word-of-mouth whitelisting." The mechanism is algori
 | Min raise | 1,000,000 ARM ($1.0M) |
 | Base raise | 1,200,000 ARM ($1.2M) |
 | Max raise (elastic) | 1,800,000 ARM ($1.8M) |
+| Expansion trigger | $1,500,000 in capped demand |
 | Percent of supply | 10 - 15% |
 | Price | $1.00 per ARM |
 | Timing | Pre-product |
@@ -225,13 +226,13 @@ When leftover rolls forward, the receiving hop's effective ceiling increases by 
 Round 1 may expand if demand significantly exceeds base supply. Round 2 (if occurs) is fixed.
 
 ```python
-if total_capped_demand >= 1.5 * BASE_SALE:
-    sale_supply = MAX_SALE  # 1,800,000 ARM
+if total_capped_demand >= 1_500_000:  # $1.5M absolute threshold
+    sale_supply = MAX_SALE  # 1,800,000 ARM ($1.8M, 15% of supply)
 else:
-    sale_supply = BASE_SALE  # 1,200,000 ARM
+    sale_supply = BASE_SALE  # 1,200,000 ARM ($1.2M, 10% of supply)
 ```
 
-Expansion is binary: either base ($1.2M) or max ($1.8M). If triggered, supply expands directly to maximum; excess demand beyond $1.8M is refunded pro-rata.
+Expansion is binary: either base ($1.2M) or max ($1.8M). If capped demand clears $1.5M, supply expands to maximum; excess demand beyond $1.8M is refunded pro-rata.
 
 ### Refunds
 
@@ -427,7 +428,7 @@ Idea: there could be an automated wind-down, for example if 10k USDC in revenue 
 TOTAL_SUPPLY = 12_000_000
 BASE_SALE = 1_200_000
 MAX_SALE = 1_800_000
-EXPANSION_TRIGGER = 1.5
+EXPANSION_TRIGGER = 1_500_000  # $1.5M absolute — triggers expansion from $1.2M to $1.8M
 
 # Overlapping ceilings — sum to 125%, not 100%.
 # Each hop absorbs up to its ceiling; unused rolls forward.
@@ -444,7 +445,7 @@ def allocate(commitments):
         for c in commitments
     )
     
-    if capped_demand >= EXPANSION_TRIGGER * BASE_SALE:
+    if capped_demand >= EXPANSION_TRIGGER:
         sale_size = MAX_SALE
     else:
         sale_size = BASE_SALE
