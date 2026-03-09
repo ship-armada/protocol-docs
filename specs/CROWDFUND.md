@@ -1,7 +1,7 @@
 # Armada Crowdfunding Spec
 ⚠️ **in flux** ⚠️
 
-This is a draft, open for commentary ([Discord](https://discord.gg/KGN3QQRYAt)).
+This is a draft, open for commentary (Discord)
 
 ## Overview
 
@@ -109,7 +109,7 @@ Governance power follows economic commitment. Until the protocol generates reven
 
 ### Design Philosophy
 
-This is a trusted-network sale, not viral growth. Participation requires invitation from someone closer to the core. Each hop has a ceiling — the maximum fraction of the raise it can absorb — but no floor. Actual allocation is demand-driven: each hop receives whatever it committed, up to its ceiling, and anything unused rolls forward to later hops.
+This is a trusted-network sale, not viral growth. Participation requires invitation from someone closer to the core. Each hop has a ceiling — the maximum fraction of the raise it can absorb. Hop-2 additionally has a hard floor: a minimum reservation off the top of the raise, guaranteeing governance breadth even when earlier hops are fully subscribed. Actual allocation is demand-driven: each hop receives whatever it committed, up to its ceiling, and anything unused rolls forward to later hops.
 
 ### Seed Selection
 
@@ -117,31 +117,35 @@ Seed criteria are determined by the founding team based on demonstrated alignmen
 
 ### Hop Structure
 
-| Hop | Description | Ceiling | Cap | Invites |
-|---|---|---|---|---|
-| 0 | Seeds | 70% | $15,000 | 3 |
-| 1 | Seed invites | 45% | $4,000 | 2 |
-| 2 | Hop-1 invites | 10% | $1,000 | 0 |
+| Hop | Description | Ceiling | Floor | Cap | Invites |
+|---|---|---|---|---|---|
+| 0 | Seeds | 70% | — | $15,000 | 3 |
+| 1 | Seed invites | 45% | — | $4,000 | 2 |
+| 2 | Hop-1 invites | 10% | 5% | $1,000 | 0 |
 
-Ceilings are overlapping by design — they sum to 125%, not 100%. No hop is guaranteed its ceiling. Each hop absorbs up to its ceiling based on actual demand; anything unused rolls forward. If all hops are fully subscribed, earlier hops fill first and later hops absorb whatever remains up to their ceiling.
+Hop-2 gets first claim on 5% of the raise before hop-0 and hop-1 ceilings are applied. This guarantees governance breadth even under strong demand from earlier hops. Hop-0 and hop-1 ceilings are calculated against the raise net of the hop-2 floor reservation. At base raise: $60k reserved for hop-2, hop-0 and hop-1 compete for the remaining $1.14M.
+
+Ceilings are overlapping by design — they sum to 125%, not 100%. No hop is guaranteed its ceiling above the floor. Each hop absorbs up to its ceiling based on actual demand; anything unused rolls forward. If all hops are fully subscribed, earlier hops fill first and later hops absorb whatever remains up to their ceiling.
 
 ### Ceiling Amounts
 
+Hop-2 floor reservation comes off the top. Hop-0 and hop-1 ceilings are applied against the remainder.
+
 **Base raise ($1.2M):**
 
-| Hop | Ceiling | Max allocation |
-|---|---|---|
-| 0 | 70% | $840,000 |
-| 1 | 45% | $540,000 |
-| 2 | 10% | $120,000 |
+| Hop | Floor reservation | Available pool | Ceiling | Max allocation |
+|---|---|---|---|---|
+| 2 | $60,000 | — | 10% of $1.14M | $114,000 (≥ $60k floor) |
+| 0 | — | $1,140,000 | 70% | $798,000 |
+| 1 | — | $1,140,000 | 45% | $513,000 |
 
 **Expanded raise ($1.8M):**
 
-| Hop | Ceiling | Max allocation |
-|---|---|---|
-| 0 | 70% | $1,260,000 |
-| 1 | 45% | $810,000 |
-| 2 | 10% | $180,000 |
+| Hop | Floor reservation | Available pool | Ceiling | Max allocation |
+|---|---|---|---|---|
+| 2 | $90,000 | — | 10% of $1.71M | $171,000 (≥ $90k floor) |
+| 0 | — | $1,710,000 | 70% | $1,197,000 |
+| 1 | — | $1,710,000 | 45% | $769,500 |
 
 ### Invitation Limits
 
@@ -153,18 +157,28 @@ Invitation limits are hop-specific and predeclared:
 
 Invitations are signed on-chain (inviter → invitee). An address can only participate at one hop level.
 
-### Sybil Resistance
+### Self-Filling and Max Single-Entity Capture
 
-The mechanism does not attempt to perfectly prevent same-entity self-invites. Instead, it relies on:
+A hop-0 participant may invite their own addresses to hop-1 and hop-2. This is not a bug. Attempting to technically enforce unique addresses doesn't work on-chain — anyone determined to bypass it uses different wallets — and socially prescribing it creates a two-tier outcome: participants who follow the norm get less, those who don't get more. That's a bad equilibrium, especially under oversubscription where pro-rata amplifies the gap.
 
-1. **Opportunity cost:** A seed who self-invites trades access to up to $15,000 (hop-0 cap) for access to up to $4,000 (hop-1 cap). The opportunity cost is concrete and cap-based, independent of how full each hop is. If a seed prefers to fill all their allocation space themselves rather than pass it along, they can — they simply do so at the hop-0 level. Self-inviting to hop-1 is a strictly worse outcome for anyone who wants significant allocation.
-2. **Threshold gates:** Rollover requires minimum unique participants, making sybil capture of leftover capacity structurally harder.
-3. **Graph visibility:** Post-sale reveal links inviters to invitee behavior.
-4. **Non-transferability:** Accumulating governance power in a pre-product protocol has low ROI.
+The mechanism is designed so that self-filling is transparently possible but economically bounded:
 
-Note: with demand-driven ceilings rather than fixed reserves, the sybil opportunity cost is cap-based rather than reserve-based. The argument is slightly different from a fixed-reserve design but the practical deterrent is equivalent — the cap differential ($15k vs $4k) is what matters, not the ceiling percentage.
+| Hop | Cap | Max addresses (self-filled) | Max USDC |
+|-----|-----|-----------------------------|----------|
+| Hop-0 | $15,000 | 1 | $15,000 |
+| Hop-1 | $4,000 | 3 | $12,000 |
+| Hop-2 | $1,000 | 6 | $6,000 |
+| **Total** | | **10 addresses** | **$33,000** |
 
-Residual risk—sybiling to accumulate votes—is mitigated by trusted-network seed selection.
+$33,000 out of a $1.2M raise is 2.75% — meaningful, but not structurally threatening. And it requires real capital deployed across 10 addresses. The actual deterrents:
+
+1. **Real capital required at every hop.** Self-filling isn't free. $33k fully deployed is the maximum, not a rounding error.
+2. **Cap differential.** Hop-0 gets $15k, hop-1 gets $4k. A seed who self-invites to access more hop-1 slots is trading $15k access for $4k access per address. The opportunity cost is concrete.
+3. **Post-sale graph visibility.** Full invite graph is published after finalization. Chains of self-invites are visible.
+4. **Rollover thresholds.** Rollover to later hops requires minimum unique committers, which limits how much leftover capacity a single entity can capture through sybil addresses.
+5. **Governance concentration has low ROI pre-revenue.** Accumulating votes in a protocol with no product yet is not obviously valuable.
+
+Residual risk—a seed concentrating votes at scale—is primarily mitigated by trusted-network seed selection. The mechanism does not make it impossible; it makes it expensive, visible, and bounded.
 
 ---
 
@@ -418,6 +432,8 @@ Idea: there could be an automated wind-down, for example if 10k USDC in revenue 
 | Hop allocation model | Demand-driven ceilings, not fixed reserves | Capacity follows actual demand; no hop is guaranteed allocation it didn't earn; unused capacity rolls forward |
 | Overlapping ceilings | Sum to 125% (70/45/10) | Intentional — later hops can absorb more if earlier hops underperform, without needing to predeclare exact splits |
 | No per-hop floors | Informational only | Global minimum raise ($1M) provides the real floor; per-hop floors add complexity without meaningful protection |
+| Hop-2 hard floor | 5% of raise reserved off the top | Hop-2 is governance breadth and ecosystem signal — mechanism should back that up. Ensures hop-2 always gets something even under strong hop-0/hop-1 demand. Negligible impact on earlier hops (~$50 less per participant at full subscription) |
+| Self-filling downstream hops | Permitted, disclosed | Technical enforcement doesn't work; social prescription penalises honest participants vs those who bypass it. Max capture is bounded ($33k / 10 addresses) and visible post-sale |
 
 ---
 
@@ -432,7 +448,10 @@ EXPANSION_TRIGGER = 1_500_000  # $1.5M absolute — triggers expansion from $1.2
 
 # Overlapping ceilings — sum to 125%, not 100%.
 # Each hop absorbs up to its ceiling; unused rolls forward.
+# Hop-2 has a hard floor: first claim on HOP2_FLOOR_PCT of raise,
+# taken off the top before hop-0/hop-1 ceilings are calculated.
 HOP_CEILING_PCT = {0: 0.70, 1: 0.45, 2: 0.10}
+HOP2_FLOOR_PCT = 0.05  # hop-2 guaranteed minimum as % of raise
 HOP_CAP = {0: 15_000, 1: 4_000, 2: 1_000}
 PRICE = 1.00  # USDC per ARM
 
@@ -451,8 +470,15 @@ def allocate(commitments):
         sale_size = BASE_SALE
     
     # Step 2: Calculate per-hop ceilings
-    # These are maximums, not guarantees. Effective ceiling may increase via rollover.
-    ceilings = {h: HOP_CEILING_PCT[h] * sale_size for h in [0, 1, 2]}
+    # Hop-2 floor is reserved first; hop-0/hop-1 ceilings apply to remainder.
+    hop2_floor = HOP2_FLOOR_PCT * sale_size
+    available = sale_size - hop2_floor  # pool for hop-0 and hop-1
+    
+    ceilings = {
+        0: HOP_CEILING_PCT[0] * available,
+        1: HOP_CEILING_PCT[1] * available,
+        2: max(hop2_floor, HOP_CEILING_PCT[2] * available),  # floor or normal, whichever larger
+    }
     effective_ceilings = dict(ceilings)  # updated during rollover
     
     # Step 3: Allocate per hop (demand-driven, up to ceiling)
