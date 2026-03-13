@@ -1,0 +1,238 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.section { margin-bottom: 2rem; }
+.label { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 6px; }
+.row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.bar-wrap { flex: 1; height: 28px; background: var(--color-background-secondary); border-radius: 6px; overflow: hidden; border: 0.5px solid var(--color-border-tertiary); }
+.bar { height: 100%; display: flex; align-items: center; padding-left: 8px; font-size: 12px; font-weight: 500; transition: width 0.4s; white-space: nowrap; }
+.bar-label { font-size: 13px; color: var(--color-text-secondary); width: 70px; text-align: right; flex-shrink: 0; }
+.num { font-size: 13px; color: var(--color-text-secondary); width: 68px; flex-shrink: 0; text-align: right; }
+.controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; margin-bottom: 1.5rem; }
+.ctrl label { font-size: 13px; color: var(--color-text-secondary); display: block; margin-bottom: 4px; }
+.ctrl input { width: 100%; }
+.ctrl .val { font-size: 13px; font-weight: 500; color: var(--color-text-primary); float: right; }
+.result-card { border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); padding: 1rem 1.25rem; margin-bottom: 1.5rem; }
+.result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1rem; }
+.metric { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 12px; }
+.metric .m-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
+.metric .m-val { font-size: 20px; font-weight: 500; color: var(--color-text-primary); }
+.verdict { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: var(--border-radius-md); font-size: 14px; font-weight: 500; }
+.verdict.pass { background: var(--color-background-success); color: var(--color-text-success); }
+.verdict.fail { background: var(--color-background-danger); color: var(--color-text-danger); }
+.verdict.warn { background: var(--color-background-warning); color: var(--color-text-warning); }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.dot.pass { background: var(--color-text-success); }
+.dot.fail { background: var(--color-text-danger); }
+.dot.warn { background: var(--color-text-warning); }
+.sub { font-size: 12px; color: var(--color-text-secondary); margin-top: 4px; font-weight: 400; }
+.divider { border: none; border-top: 0.5px solid var(--color-border-tertiary); margin: 1.5rem 0; }
+.note { font-size: 12px; color: var(--color-text-secondary); line-height: 1.6; margin-top: 0.5rem; }
+.section-head { font-size: 14px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 1rem; }
+.timeline { display: flex; gap: 0; margin-bottom: 1rem; }
+.tl-step { flex: 1; text-align: center; }
+.tl-line { height: 3px; background: var(--color-background-secondary); border-radius: 2px; position: relative; margin-bottom: 6px; overflow: hidden; }
+.tl-fill { height: 100%; background: #1D9E75; border-radius: 2px; transition: width 0.3s; }
+.tl-label { font-size: 11px; color: var(--color-text-secondary); }
+.tl-val { font-size: 12px; font-weight: 500; color: var(--color-text-primary); }
+</style>
+
+<div style="padding: 1rem 0">
+
+<div class="section">
+  <div class="section-head">Adjust the vote</div>
+  <div class="controls">
+    <div class="ctrl">
+      <label>Circulating supply <span class="val" id="supplyVal">2,400,000</span></label>
+      <input type="range" id="supply" min="1000000" max="5000000" step="100000" value="2400000">
+    </div>
+    <div class="ctrl">
+      <label>Quorum threshold <span class="val" id="quorumPctVal">20%</span></label>
+      <input type="range" id="quorumPct" min="10" max="40" step="5" value="20">
+    </div>
+    <div class="ctrl">
+      <label>FOR votes <span class="val" id="forVal">520,000</span></label>
+      <input type="range" id="forVotes" min="0" max="1000000" step="10000" value="520000">
+    </div>
+    <div class="ctrl">
+      <label>AGAINST votes <span class="val" id="againstVal">180,000</span></label>
+      <input type="range" id="againstVotes" min="0" max="500000" step="10000" value="180000">
+    </div>
+    <div class="ctrl">
+      <label>ABSTAIN votes <span class="val" id="abstainVal">100,000</span></label>
+      <input type="range" id="abstainVotes" min="0" max="300000" step="10000" value="100000">
+    </div>
+  </div>
+</div>
+
+<div class="result-card">
+  <div class="result-grid">
+    <div class="metric">
+      <div class="m-label">Quorum needed</div>
+      <div class="m-val" id="quorumNeeded">480,000</div>
+      <div class="sub" id="quorumNeededSub">20% of 2.4M</div>
+    </div>
+    <div class="metric">
+      <div class="m-label">Votes cast</div>
+      <div class="m-val" id="totalVotes">800,000</div>
+      <div class="sub" id="totalVotesSub">33% of supply</div>
+    </div>
+    <div class="metric">
+      <div class="m-label">FOR share</div>
+      <div class="m-val" id="forShare">65%</div>
+      <div class="sub">of votes cast</div>
+    </div>
+  </div>
+  <div class="verdict" id="verdict">
+    <div class="dot pass" id="verdictDot"></div>
+    <div>
+      <div id="verdictText">Proposal passes</div>
+      <div class="sub" id="verdictSub">Quorum met · Majority FOR</div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <div class="section-head">Vote breakdown</div>
+
+  <div class="row">
+    <div class="bar-label">FOR</div>
+    <div class="bar-wrap">
+      <div class="bar" id="forBar" style="background: #1D9E75; width: 65%">
+        <span style="color: #04342C" id="forBarPct">65%</span>
+      </div>
+    </div>
+    <div class="num" id="forNum">520,000</div>
+  </div>
+
+  <div class="row">
+    <div class="bar-label">AGAINST</div>
+    <div class="bar-wrap">
+      <div class="bar" id="againstBar" style="background: #E24B4A; width: 22.5%">
+        <span style="color: #501313" id="againstBarPct">23%</span>
+      </div>
+    </div>
+    <div class="num" id="againstNum">180,000</div>
+  </div>
+
+  <div class="row">
+    <div class="bar-label">ABSTAIN</div>
+    <div class="bar-wrap">
+      <div class="bar" id="abstainBar" style="background: #888780; width: 12.5%">
+        <span style="color: #2C2C2A" id="abstainBarPct">13%</span>
+      </div>
+    </div>
+    <div class="num" id="abstainNum">100,000</div>
+  </div>
+
+  <p class="note">ABSTAIN counts toward quorum but not majority. A proposal can reach quorum with abstains and pass with only a small FOR plurality.</p>
+</div>
+
+<hr class="divider">
+
+<div class="section">
+  <div class="section-head">Proposal timeline (days from creation)</div>
+  <div class="timeline">
+    <div class="tl-step" style="flex:2">
+      <div class="tl-line"><div class="tl-fill" style="width:100%"></div></div>
+      <div class="tl-val">2 days</div>
+      <div class="tl-label">Review</div>
+    </div>
+    <div class="tl-step" style="flex:5" id="votingStep">
+      <div class="tl-line"><div class="tl-fill" id="votingFill" style="width:100%"></div></div>
+      <div class="tl-val" id="votingDays">5 days</div>
+      <div class="tl-label">Voting</div>
+    </div>
+    <div class="tl-step" style="flex:2" id="timelockStep">
+      <div class="tl-line"><div class="tl-fill" id="timelockFill" style="width:100%"></div></div>
+      <div class="tl-val" id="timelockDays">2 days</div>
+      <div class="tl-label">Timelock</div>
+    </div>
+  </div>
+  <p class="note" id="timelineNote">Standard proposal: 9 days minimum from creation to execution. Snapshot is fixed at the block before proposal creation — tokens acquired after cannot vote on this proposal.</p>
+</div>
+
+</div>
+
+<script>
+function fmt(n) { return Math.round(n).toLocaleString(); }
+function pct(n) { return Math.round(n) + '%'; }
+
+function update() {
+  const supply = +document.getElementById('supply').value;
+  const quorumPct = +document.getElementById('quorumPct').value;
+  const forV = +document.getElementById('forVotes').value;
+  const againstV = +document.getElementById('againstVotes').value;
+  const abstainV = +document.getElementById('abstainVotes').value;
+
+  document.getElementById('supplyVal').textContent = fmt(supply);
+  document.getElementById('quorumPctVal').textContent = pct(quorumPct);
+  document.getElementById('forVal').textContent = fmt(forV);
+  document.getElementById('againstVal').textContent = fmt(againstV);
+  document.getElementById('abstainVal').textContent = fmt(abstainV);
+
+  const quorumNeeded = supply * quorumPct / 100;
+  const total = forV + againstV + abstainV;
+  const forShare = total > 0 ? forV / total * 100 : 0;
+  const quorumMet = total >= quorumNeeded;
+  const majorityFor = forV > againstV;
+
+  document.getElementById('quorumNeeded').textContent = fmt(quorumNeeded);
+  document.getElementById('quorumNeededSub').textContent = pct(quorumPct) + ' of ' + (supply/1e6).toFixed(1) + 'M';
+  document.getElementById('totalVotes').textContent = fmt(total);
+  document.getElementById('totalVotesSub').textContent = total > 0 ? pct(total/supply*100) + ' of supply' : '—';
+  document.getElementById('forShare').textContent = pct(forShare);
+
+  const forPct = total > 0 ? forV/total*100 : 0;
+  const againstPct = total > 0 ? againstV/total*100 : 0;
+  const abstainPct = total > 0 ? abstainV/total*100 : 0;
+
+  document.getElementById('forBar').style.width = Math.max(forPct, 0) + '%';
+  document.getElementById('againstBar').style.width = Math.max(againstPct, 0) + '%';
+  document.getElementById('abstainBar').style.width = Math.max(abstainPct, 0) + '%';
+  document.getElementById('forBarPct').textContent = pct(forPct);
+  document.getElementById('againstBarPct').textContent = pct(againstPct);
+  document.getElementById('abstainBarPct').textContent = pct(abstainPct);
+  document.getElementById('forNum').textContent = fmt(forV);
+  document.getElementById('againstNum').textContent = fmt(againstV);
+  document.getElementById('abstainNum').textContent = fmt(abstainV);
+
+  const v = document.getElementById('verdict');
+  const dot = document.getElementById('verdictDot');
+  const txt = document.getElementById('verdictText');
+  const sub = document.getElementById('verdictSub');
+
+  const isExtended = quorumPct >= 30;
+  const votingDays = isExtended ? 7 : 5;
+  const timelockDays = isExtended ? 4 : 2;
+  document.getElementById('votingDays').textContent = votingDays + ' days';
+  document.getElementById('timelockDays').textContent = timelockDays + ' days';
+  const totalDays = 2 + votingDays + timelockDays;
+  document.getElementById('timelineNote').textContent = (isExtended ? 'Extended (high-impact)' : 'Standard') + ' proposal: ' + totalDays + ' days minimum from creation to execution. Snapshot is fixed at the block before proposal creation — tokens acquired after cannot vote on this proposal.';
+
+  if (quorumMet && majorityFor) {
+    v.className = 'verdict pass';
+    dot.className = 'dot pass';
+    txt.textContent = 'Proposal passes';
+    sub.textContent = 'Quorum met · Majority FOR';
+  } else if (!quorumMet) {
+    v.className = 'verdict fail';
+    dot.className = 'dot fail';
+    txt.textContent = 'Proposal defeated — quorum not met';
+    sub.textContent = fmt(quorumNeeded - total) + ' more votes needed to reach quorum';
+  } else {
+    v.className = 'verdict fail';
+    dot.className = 'dot fail';
+    txt.textContent = 'Proposal defeated — majority AGAINST';
+    sub.textContent = 'Quorum met but FOR does not exceed AGAINST';
+  }
+}
+
+['supply','quorumPct','forVotes','againstVotes','abstainVotes'].forEach(id => {
+  document.getElementById(id).addEventListener('input', update);
+});
+update();
+</script>
